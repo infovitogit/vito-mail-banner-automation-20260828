@@ -1,4 +1,4 @@
-/*
+﻿/*
  * ViTO Office 365 Mail Banner Automation
  * Independent from the ViTO signature pilot.
  * Preserves the current client signature and inserts the active campaign
@@ -9,7 +9,7 @@
 
   var CAMPAIGN = {
     id: "vito-gastech-bangkok-2026",
-    imageUrl: "https://www.vito.com.tr/images/gastechbangkok2026banner.png",
+    imageUrl: "https://infovitogit.github.io/vito-mail-banner-automation-20260828/assets/gastechbangkok2026banner.png",
     altText: "ViTO is attending GASTECH Bangkok 2026",
     displayWidth: 600,
     expiresAt: "2026-09-18T00:00:00+03:00"
@@ -255,3 +255,4 @@
     }
   }
 })(typeof globalThis !== "undefined" ? globalThis : this);
+
