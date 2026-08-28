@@ -1,4 +1,4 @@
-﻿/*
+/*
  * ViTO Office 365 Mail Banner Automation
  * Independent from the ViTO signature pilot.
  * Preserves the current client signature and inserts the active campaign
@@ -15,6 +15,10 @@
     expiresAt: "2026-09-18T00:00:00+03:00"
   };
 
+  var COORDINATED_MAILBOXES = {
+    "oguz.sahbazer@vito.com.tr": true
+  };
+
   function log(level, message) {
     try {
       if (root.console && typeof root.console[level] === "function") {
@@ -28,6 +32,11 @@
   function isCampaignActive(nowMs) {
     var current = typeof nowMs === "number" ? nowMs : Date.now();
     return current < Date.parse(CAMPAIGN.expiresAt);
+  }
+
+  function isCoordinatedMailbox(emailAddress) {
+    var normalized = String(emailAddress || "").trim().toLowerCase();
+    return COORDINATED_MAILBOXES[normalized] === true;
   }
 
   function buildBannerHtml() {
@@ -190,6 +199,16 @@
   function insertVitoMailBanner(event) {
     var done = completeOnce(event);
 
+    try {
+      if (isCoordinatedMailbox(Office.context.mailbox.userProfile.emailAddress)) {
+        log("info", "SKIP_COORDINATED_SIGNATURE_MAILBOX");
+        done();
+        return;
+      }
+    } catch (_) {
+      // If the mailbox profile is unavailable, continue with normal banner handling.
+    }
+
     if (!isCampaignActive()) {
       log("info", "CAMPAIGN_EXPIRED");
       done();
@@ -230,12 +249,14 @@
 
   var api = {
     CAMPAIGN: CAMPAIGN,
+    COORDINATED_MAILBOXES: COORDINATED_MAILBOXES,
     buildBannerHtml: buildBannerHtml,
     currentComposeSegment: currentComposeSegment,
     findReplyBoundary: findReplyBoundary,
     hasCurrentBanner: hasCurrentBanner,
     insertBannerIntoFullBody: insertBannerIntoFullBody,
     isCampaignActive: isCampaignActive,
+    isCoordinatedMailbox: isCoordinatedMailbox,
     stripDocumentWrapper: stripDocumentWrapper
   };
 
@@ -255,4 +276,3 @@
     }
   }
 })(typeof globalThis !== "undefined" ? globalThis : this);
-

@@ -57,4 +57,8 @@ assert.strictEqual(
   false
 );
 
+assert.strictEqual(banner.isCoordinatedMailbox("oguz.sahbazer@vito.com.tr"), true);
+assert.strictEqual(banner.isCoordinatedMailbox("OGUZ.SAHBAZER@VITO.COM.TR"), true);
+assert.strictEqual(banner.isCoordinatedMailbox("another.user@vito.com.tr"), false);
+
 console.log("All ViTO banner runtime tests passed.");
