@@ -1,4 +1,4 @@
-﻿/*
+/*
  * ViTO Office 365 Mail Banner Automation
  * Independent from the ViTO signature pilot.
  * Preserves the current client signature and inserts the active campaign
@@ -13,6 +13,11 @@
     altText: "ViTO is attending GASTECH Bangkok 2026",
     displayWidth: 600,
     expiresAt: "2026-09-18T00:00:00+03:00"
+  };
+
+  var ORDERING = {
+    signatureWaitMs: 6000,
+    pollIntervalMs: 250
   };
 
   function log(level, message) {
@@ -78,16 +83,53 @@
     return currentComposeSegment(html).indexOf('data-vito-mail-banner="' + CAMPAIGN.id + '"') >= 0;
   }
 
+  function currentBannerPattern() {
+    return new RegExp(
+      '<div\\b(?=[^>]*\\bdata-vito-mail-banner\\s*=\\s*["\\\']' +
+        CAMPAIGN.id +
+        '["\\\'])[^>]*>[\\s\\S]*?<\\/div\\s*>',
+      "gi"
+    );
+  }
+
+  function removeCurrentBanner(html) {
+    var source = String(html || "");
+    var boundary = findReplyBoundary(source);
+    var current = boundary >= 0 ? source.slice(0, boundary) : source;
+    var quoted = boundary >= 0 ? source.slice(boundary) : "";
+    return current.replace(currentBannerPattern(), "") + quoted;
+  }
+
+  function composeHasMeaningfulContent(html) {
+    var source = stripDocumentWrapper(removeCurrentBanner(html));
+
+    if (/<(?:img|table)\b/i.test(source)) {
+      return true;
+    }
+
+    var text = source
+      .replace(/<style\b[^>]*>[\s\S]*?<\/style\s*>/gi, "")
+      .replace(/<[^>]+>/g, "")
+      .replace(/&nbsp;|&#160;|&#xA0;/gi, "")
+      .replace(/[\s\u200B-\u200D\uFEFF]+/g, "");
+
+    return text.length > 0;
+  }
+
   function insertBannerIntoFullBody(html) {
     var source = String(html || "");
-    if (!isCampaignActive() || hasCurrentBanner(source)) {
+    if (!isCampaignActive()) {
       return { changed: false, html: source };
     }
 
-    var boundary = findReplyBoundary(source);
-    var insertAt = boundary >= 0 ? boundary : findClosingBody(source);
-    var updated = source.slice(0, insertAt) + buildBannerHtml() + source.slice(insertAt);
-    return { changed: true, html: updated };
+    var withoutCurrentBanner = removeCurrentBanner(source);
+    var boundary = findReplyBoundary(withoutCurrentBanner);
+    var insertAt = boundary >= 0 ? boundary : findClosingBody(withoutCurrentBanner);
+    var updated =
+      withoutCurrentBanner.slice(0, insertAt) +
+      buildBannerHtml() +
+      withoutCurrentBanner.slice(insertAt);
+    return { changed: updated !== source, html: updated };
   }
 
   function stripDocumentWrapper(html) {
@@ -131,6 +173,32 @@
       } else {
         item.body.getAsync(Office.CoercionType.Html, callback);
       }
+    });
+  }
+
+  function waitForComposeContent(item, currentReplyOnly) {
+    var startedAt = Date.now();
+
+    return new Promise(function (resolve, reject) {
+      function poll() {
+        getBodyHtml(item, currentReplyOnly)
+          .then(function (html) {
+            if (composeHasMeaningfulContent(html)) {
+              resolve({ html: html, ready: true });
+              return;
+            }
+
+            if (Date.now() - startedAt >= ORDERING.signatureWaitMs) {
+              resolve({ html: html, ready: false });
+              return;
+            }
+
+            root.setTimeout(poll, ORDERING.pollIntervalMs);
+          })
+          .catch(reject);
+      }
+
+      poll();
     });
   }
 
@@ -200,8 +268,11 @@
       var item = Office.context.mailbox.item;
       var mobile = isMobileOutlook();
 
-      getBodyHtml(item, mobile)
-        .then(function (html) {
+      waitForComposeContent(item, mobile)
+        .then(function (bodyState) {
+          var html = bodyState.html;
+          log("log", bodyState.ready ? "SIGNATURE_READY" : "SIGNATURE_WAIT_TIMEOUT");
+
           if (mobile) {
             return setMobileSignatureAndBanner(item, html).then(function (changed) {
               log("log", changed ? "MOBILE_INSERT_OK" : "MOBILE_ALREADY_PRESENT");
@@ -230,12 +301,15 @@
 
   var api = {
     CAMPAIGN: CAMPAIGN,
+    ORDERING: ORDERING,
     buildBannerHtml: buildBannerHtml,
+    composeHasMeaningfulContent: composeHasMeaningfulContent,
     currentComposeSegment: currentComposeSegment,
     findReplyBoundary: findReplyBoundary,
     hasCurrentBanner: hasCurrentBanner,
     insertBannerIntoFullBody: insertBannerIntoFullBody,
     isCampaignActive: isCampaignActive,
+    removeCurrentBanner: removeCurrentBanner,
     stripDocumentWrapper: stripDocumentWrapper
   };
 
@@ -255,4 +329,3 @@
     }
   }
 })(typeof globalThis !== "undefined" ? globalThis : this);
-
