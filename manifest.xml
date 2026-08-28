@@ -1,0 +1,92 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
+  xmlns:mailappor="http://schemas.microsoft.com/office/mailappversionoverrides"
+  xsi:type="MailApp">
+  <Id>78641F83-9B71-4D73-9166-6352B201088B</Id>
+  <Version>1.0.0.0</Version>
+  <ProviderName>ViTO Enerji</ProviderName>
+  <DefaultLocale>en-US</DefaultLocale>
+  <DisplayName DefaultValue="ViTO Mail Banner Automation" />
+  <Description DefaultValue="Preserves the user's current signature and adds the active ViTO campaign banner below it." />
+  <IconUrl DefaultValue="https://infovitogit.github.io/vito-mail-banner-automation-20260828/assets/icon-64.png" />
+  <HighResolutionIconUrl DefaultValue="https://infovitogit.github.io/vito-mail-banner-automation-20260828/assets/icon-128.png" />
+  <SupportUrl DefaultValue="https://www.vito.com.tr" />
+  <AppDomains>
+    <AppDomain>https://infovitogit.github.io</AppDomain>
+    <AppDomain>https://www.vito.com.tr</AppDomain>
+  </AppDomains>
+  <Hosts>
+    <Host Name="Mailbox" />
+  </Hosts>
+  <Requirements>
+    <Sets DefaultMinVersion="1.1">
+      <Set Name="Mailbox" />
+    </Sets>
+  </Requirements>
+  <FormSettings>
+    <Form xsi:type="ItemRead">
+      <DesktopSettings>
+        <SourceLocation DefaultValue="https://infovitogit.github.io/vito-mail-banner-automation-20260828/runtime.html" />
+        <RequestedHeight>250</RequestedHeight>
+      </DesktopSettings>
+    </Form>
+  </FormSettings>
+  <Permissions>ReadWriteMailbox</Permissions>
+  <Rule xsi:type="RuleCollection" Mode="Or">
+    <Rule xsi:type="ItemIs" ItemType="Message" FormType="Read" />
+  </Rule>
+  <DisableEntityHighlighting>true</DisableEntityHighlighting>
+
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/mailappversionoverrides" xsi:type="VersionOverridesV1_0">
+    <VersionOverrides xmlns="http://schemas.microsoft.com/office/mailappversionoverrides/1.1" xsi:type="VersionOverridesV1_1">
+      <Description resid="App.Description" />
+      <Requirements>
+        <bt:Sets DefaultMinVersion="1.5">
+          <bt:Set Name="Mailbox" />
+        </bt:Sets>
+      </Requirements>
+      <Hosts>
+        <Host xsi:type="MailHost">
+          <Runtimes>
+            <Runtime resid="Runtime.Html">
+              <Override type="javascript" resid="Runtime.Js" />
+            </Runtime>
+          </Runtimes>
+          <DesktopFormFactor>
+            <ExtensionPoint xsi:type="LaunchEvent">
+              <LaunchEvents>
+                <LaunchEvent Type="OnNewMessageCompose" FunctionName="insertVitoMailBanner" />
+              </LaunchEvents>
+              <SourceLocation resid="Runtime.Html" />
+            </ExtensionPoint>
+          </DesktopFormFactor>
+          <MobileFormFactor>
+            <ExtensionPoint xsi:type="LaunchEvent">
+              <LaunchEvents>
+                <LaunchEvent Type="OnNewMessageCompose" FunctionName="insertVitoMailBanner" />
+              </LaunchEvents>
+              <SourceLocation resid="Runtime.Html" />
+            </ExtensionPoint>
+          </MobileFormFactor>
+        </Host>
+      </Hosts>
+      <Resources>
+        <bt:Images>
+          <bt:Image id="Icon.16" DefaultValue="https://infovitogit.github.io/vito-mail-banner-automation-20260828/assets/icon-16.png" />
+          <bt:Image id="Icon.32" DefaultValue="https://infovitogit.github.io/vito-mail-banner-automation-20260828/assets/icon-32.png" />
+          <bt:Image id="Icon.80" DefaultValue="https://infovitogit.github.io/vito-mail-banner-automation-20260828/assets/icon-80.png" />
+        </bt:Images>
+        <bt:Urls>
+          <bt:Url id="Runtime.Html" DefaultValue="https://infovitogit.github.io/vito-mail-banner-automation-20260828/runtime.html" />
+          <bt:Url id="Runtime.Js" DefaultValue="https://infovitogit.github.io/vito-mail-banner-automation-20260828/banner-runtime.js" />
+        </bt:Urls>
+        <bt:LongStrings>
+          <bt:String id="App.Description" DefaultValue="Preserves the user's current signature and adds the active ViTO campaign banner below it." />
+        </bt:LongStrings>
+      </Resources>
+    </VersionOverrides>
+  </VersionOverrides>
+</OfficeApp>
+
